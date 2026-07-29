@@ -1,0 +1,6 @@
+company_id,company_name,category,metric,value,unit,period,source,notes,active,updated_at
+COMPANY-001,PT Contoh Indonesia,Profil,Industri,Jasa dan perdagangan,,,Data internal,Contoh data; ganti dengan data asli,TRUE,2026-07-15
+COMPANY-001,PT Contoh Indonesia,Keuangan,Pendapatan,1250000000,IDR,2026-Q2,Laporan manajemen,Unaudited,TRUE,2026-07-15
+COMPANY-001,PT Contoh Indonesia,Keuangan,Beban Operasional,875000000,IDR,2026-Q2,Laporan manajemen,Unaudited,TRUE,2026-07-15
+COMPANY-001,PT Contoh Indonesia,Operasional,Jumlah Pelanggan Aktif,1840,pelanggan,2026-06,CRM,Contoh data,TRUE,2026-07-15
+COMPANY-001,PT Contoh Indonesia,Risiko,Piutang Lewat Jatuh Tempo,92000000,IDR,2026-06,Data piutang,Perlu validasi manajemen,TRUE,2026-07-15

@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function validProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'role', 'copilot', 'mood',
+          'onboarded', 'memoryEnabled', 'memoryDefaultApplied', 'createdAt', 'updatedAt', 'lastLoginAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'uid', 'email', 'displayName', 'role', 'copilot', 'mood',
+          'onboarded', 'memoryEnabled', 'memoryDefaultApplied', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email is string
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() >= 2
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.role is string
+        && request.resource.data.role.size() >= 2
+        && request.resource.data.role.size() <= 100
+        && request.resource.data.copilot in ['sum-ai', 'd4shgrd']
+        && request.resource.data.mood in ['Baik', 'Fokus', 'Santai', 'Galak']
+        && request.resource.data.onboarded is bool
+        && request.resource.data.memoryEnabled is bool
+        && request.resource.data.memoryDefaultApplied is bool;
+    }
+
+    function validSession() {
+      return request.resource.data.keys().hasOnly([
+          'title', 'copilot', 'mood', 'messageCount', 'lastMessage',
+          'createdAtMs', 'updatedAtMs', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'title', 'copilot', 'mood', 'messageCount', 'lastMessage',
+          'createdAtMs', 'updatedAtMs', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.copilot in ['sum-ai', 'd4shgrd']
+        && request.resource.data.mood in ['Baik', 'Fokus', 'Santai', 'Galak']
+        && request.resource.data.messageCount is int
+        && request.resource.data.messageCount >= 0
+        && request.resource.data.lastMessage is string
+        && request.resource.data.lastMessage.size() <= 300
+        && request.resource.data.createdAtMs is int
+        && request.resource.data.updatedAtMs is int;
+    }
+
+    function validMessage(messageId) {
+      return request.resource.data.keys().hasOnly([
+          'id', 'role', 'content', 'time', 'createdAtMs',
+          'inScope', 'error', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'id', 'role', 'content', 'time', 'createdAtMs',
+          'inScope', 'error', 'createdAt'
+        ])
+        && request.resource.data.id == messageId
+        && request.resource.data.role in ['user', 'assistant']
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 50000
+        && request.resource.data.time is string
+        && request.resource.data.createdAtMs is int
+        && request.resource.data.inScope is bool
+        && request.resource.data.error is bool;
+    }
+
+    function validMemory(memoryId) {
+      return request.resource.data.keys().hasOnly([
+          'key', 'label', 'value', 'category', 'source',
+          'createdAtMs', 'updatedAtMs', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'key', 'label', 'value', 'category', 'source',
+          'createdAtMs', 'updatedAtMs', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.key == memoryId
+        && request.resource.data.label is string
+        && request.resource.data.label.size() > 0
+        && request.resource.data.label.size() <= 80
+        && request.resource.data.value is string
+        && request.resource.data.value.size() > 0
+        && request.resource.data.value.size() <= 1000
+        && request.resource.data.category in ['identity', 'location', 'work', 'preference', 'other']
+        && request.resource.data.source in ['chat', 'manual']
+        && request.resource.data.createdAtMs is int
+        && request.resource.data.updatedAtMs is int;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validProfile(uid);
+
+      match /sessions/{sessionId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validSession();
+
+        match /messages/{messageId} {
+          allow read, delete: if isOwner(uid);
+          allow create, update: if isOwner(uid) && validMessage(messageId);
+        }
+      }
+
+      match /memories/{memoryId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validMemory(memoryId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

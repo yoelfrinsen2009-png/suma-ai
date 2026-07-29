@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0",
+  "requestId": "uji-sumai-001",
+  "companyId": "COMPANY-001",
+  "message": "Analisis kondisi perusahaan berdasarkan data yang tersedia dan jelaskan risiko utamanya.",
+  "history": [],
+  "copilot": "sum-ai",
+  "mood": "Fokus",
+  "locale": "id-ID"
+}

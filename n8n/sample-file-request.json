@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0",
+  "requestId": "uji-file-sumai-001",
+  "companyId": "COMPANY-001",
+  "message": "Analisis tren dan risiko dari file ini.",
+  "history": [],
+  "copilot": "sum-ai",
+  "mood": "Fokus",
+  "locale": "id-ID",
+  "attachment": {
+    "mode": "text",
+    "name": "contoh-penjualan.csv",
+    "mediaType": "text/plain",
+    "sourceType": "text/csv",
+    "size": 72,
+    "truncated": false,
+    "summary": "3 baris data contoh",
+    "text": "bulan,pendapatan,tunggakan\nMei,120000,5000\nJuni,135000,12000"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+dist/
+.firebase/
+firebase-debug.log
+*.tar
+*.log
+.env*
+!.env.example
+!.env.docker.example
