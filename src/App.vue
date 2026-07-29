@@ -720,13 +720,54 @@ function chooseDataset(file: File | undefined) {
   void selectAnalysisFile(file, "dataset");
 }
 
+function ensureTicketNumber() {
+  if (!ticketNumber.value) {
+    ticketNumber.value = `IT-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+  return ticketNumber.value;
+}
+
 function submitTicket() {
   if (!ticketDescription.value.trim()) {
     notify("Tuliskan detail kendala terlebih dahulu");
     return;
   }
-  ticketNumber.value = `IT-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${Math.floor(1000 + Math.random() * 9000)}`;
+  ensureTicketNumber();
   notify("Tiket IT berhasil dibuat");
+}
+
+function emailTicket() {
+  if (!ticketDescription.value.trim()) {
+    notify("Tuliskan detail kendala terlebih dahulu");
+    return;
+  }
+  const ticket = ensureTicketNumber();
+  const supportEmail = import.meta.env.VITE_IT_SUPPORT_EMAIL?.trim() ?? "";
+  const userEmail = profile.value?.email?.trim() ?? "";
+  const recipient = supportEmail || userEmail;
+  if (!recipient) {
+    notify("Alamat email tujuan tidak tersedia");
+    return;
+  }
+  const ccEmail = supportEmail && userEmail && userEmail !== supportEmail ? userEmail : "";
+  const subject = `[Tiket IT ${ticket}] ${ticketCategory.value} - ${ticketPriority.value}`;
+  const body = [
+    `Nama pelapor: ${profile.value?.displayName ?? "-"}`,
+    `Email pelapor: ${userEmail || "-"}`,
+    `Kategori: ${ticketCategory.value}`,
+    `Prioritas: ${ticketPriority.value}`,
+    `Nomor tiket: ${ticket}`,
+    "",
+    "Detail kendala:",
+    ticketDescription.value.trim(),
+  ].join("\n");
+  const params = new URLSearchParams();
+  if (ccEmail) params.set("cc", ccEmail);
+  params.set("subject", subject);
+  params.set("body", body);
+  const query = params.toString().replace(/\+/g, "%20");
+  window.location.href = `mailto:${recipient}?${query}`;
+  notify(supportEmail ? "Membuka email untuk tim IT" : "Membuka email tiket IT");
 }
 
 watch([() => messages.value.length, loading], async () => {
@@ -928,7 +969,7 @@ onBeforeUnmount(() => {
 
         <section v-else-if="activeView === 'Navigasi Halaman'" class="page-view"><div class="section-heading"><div><span class="view-kicker">Temukan lebih cepat</span><h1>Navigasi Halaman</h1><p>Cari modul atau bantuan yang kamu butuhkan.</p></div></div><label class="module-search"><UiIcon name="search"/><input v-model="moduleSearch" placeholder="Cari halaman atau fitur..."></label><div class="module-grid"><article v-for="[icon, title, copy] in filteredModules" :key="title"><span><UiIcon :name="icon" :size="20"/></span><div><h2>{{ title }}</h2><p>{{ copy }}</p></div><button type="button" @click="openModule(title)"><UiIcon name="arrow"/></button></article></div><div v-if="filteredModules.length === 0" class="empty-search"><UiIcon name="search" :size="28"/><h2>Halaman tidak ditemukan</h2><button type="button" @click="moduleSearch = ''">Hapus pencarian</button></div></section>
 
-        <section v-else class="page-view"><div class="section-heading"><div><span class="view-kicker">Dukungan internal</span><h1>Arahkan ke IT</h1><p>Jelaskan kendala agar informasinya siap ditindaklanjuti.</p></div><span class="service-status"><i></i> Semua sistem normal</span></div><div class="support-layout"><form class="ticket-form" @submit.prevent="submitTicket"><div class="panel-title"><div><span>Buat tiket bantuan</span><small>Data tiket demo tersimpan selama halaman aktif</small></div></div><label>Kategori<select v-model="ticketCategory"><option>Akses akun</option><option>Gangguan aplikasi</option><option>Permintaan data</option><option>Perangkat kerja</option></select></label><label>Prioritas<select v-model="ticketPriority"><option>Normal</option><option>Tinggi</option><option>Kritis</option></select></label><label class="full-field">Detail kendala<textarea v-model="ticketDescription" rows="5" placeholder="Contoh: Saya tidak bisa membuka halaman proposal..."></textarea></label><div class="ticket-actions"><button type="button" class="view-secondary" @click="activeView = 'Chat'; promptValue = `Bantu diagnosa masalah IT: ${ticketDescription || 'tidak bisa mengakses sistem'}.`"><UiIcon name="chat"/> Chat dengan AI</button><button type="submit" class="view-primary"><UiIcon name="send"/> Kirim tiket</button></div></form><aside class="support-side"><div v-if="ticketNumber" class="ticket-success"><span><UiIcon name="check" :size="22"/></span><small>Tiket berhasil dibuat</small><strong>{{ ticketNumber }}</strong><p>{{ ticketCategory }} · {{ ticketPriority }}</p></div><div v-else class="support-card"><span class="brand-mark large"><img src="/d4shgrd-mascot.png" alt=""></span><h2>Butuh jawaban cepat?</h2><p>D4SHGRD dapat membantu pengecekan awal.</p></div></aside></div></section>
+        <section v-else class="page-view"><div class="section-heading"><div><span class="view-kicker">Dukungan internal</span><h1>Arahkan ke IT</h1><p>Jelaskan kendala agar informasinya siap ditindaklanjuti.</p></div><span class="service-status"><i></i> Semua sistem normal</span></div><div class="support-layout"><form class="ticket-form" @submit.prevent="submitTicket"><div class="panel-title"><div><span>Buat tiket bantuan</span><small>Data tiket demo tersimpan selama halaman aktif</small></div></div><label>Kategori<select v-model="ticketCategory"><option>Akses akun</option><option>Gangguan aplikasi</option><option>Permintaan data</option><option>Perangkat kerja</option></select></label><label>Prioritas<select v-model="ticketPriority"><option>Normal</option><option>Tinggi</option><option>Kritis</option></select></label><label class="full-field">Detail kendala<textarea v-model="ticketDescription" rows="5" placeholder="Contoh: Saya tidak bisa membuka halaman proposal..."></textarea></label><div class="ticket-actions"><button type="button" class="view-secondary" @click="activeView = 'Chat'; promptValue = `Bantu diagnosa masalah IT: ${ticketDescription || 'tidak bisa mengakses sistem'}.`"><UiIcon name="chat"/> Chat dengan AI</button><button type="button" class="view-secondary" @click="emailTicket"><UiIcon name="mail"/> Kirim ke email</button><button type="submit" class="view-primary"><UiIcon name="send"/> Kirim tiket</button></div></form><aside class="support-side"><div v-if="ticketNumber" class="ticket-success"><span><UiIcon name="check" :size="22"/></span><small>Tiket berhasil dibuat</small><strong>{{ ticketNumber }}</strong><p>{{ ticketCategory }} · {{ ticketPriority }}</p></div><div v-else class="support-card"><span class="brand-mark large"><img src="/d4shgrd-mascot.png" alt=""></span><h2>Butuh jawaban cepat?</h2><p>D4SHGRD dapat membantu pengecekan awal.</p></div></aside></div></section>
       </div>
     </div>
 
